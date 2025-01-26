@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מציג קבלות</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-bottom: 1px solid #ccc;
+        }
+
+        header .menu {
+            display: flex;
+            gap: 15px;
+        }
+
+        header .menu-item {
+            cursor: pointer;
+            padding: 5px 10px;
+            background-color: yellow;
+            border-radius: 5px;
+        }
+
+        main {
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        table th, table td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .actions button {
+            cursor: pointer;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            background-color: #007BFF;
+            color: white;
+        }
+
+        .actions button:hover {
+            background-color: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 500px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .modal-body {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .form-actions button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .form-actions .save {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .form-actions .cancel {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="menu">
+            <button class="menu-item" onclick="openModal()">צור קבלה חדשה</button>
+        </div>
+    </header>
+
+    <main>
+        <table id="receiptsTable">
+            <thead>
+                <tr>
+                    <th>התורם</th>
+                    <th>סכום</th>
+                    <th>פעולות</th>
+                    <th>מספר קבלה</th>
+                    <th>מטבע</th>
+                    <th>תאריך יצירה</th>
+                    <th>תאריך להדפסה</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </main>
+
+    <div class="modal" id="newReceiptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">הוספת קבלה</h2>
+                <button onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="donorName">שם התורם</label>
+                    <input type="text" id="donorName">
+                </div>
+                <div class="form-group">
+                    <label for="amount">בסכום</label>
+                    <input type="number" id="amount">
+                </div>
+                <div class="form-group">
+                    <label for="receiptNumber">מספר קבלה</label>
+                    <input type="text" id="receiptNumber">
+                </div>
+                <div class="form-group">
+                    <label for="currency">מטבע</label>
+                    <select id="currency">
+                        <option value="שקל">שקל</option>
+                        <option value="דולר">דולר</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="creationDate">תאריך יצירה</label>
+                    <input type="date" id="creationDate">
+                </div>
+                <div class="form-group">
+                    <label for="printDate">תאריך להדפסה</label>
+                    <input type="date" id="printDate">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="save" onclick="saveReceipt()">שמור</button>
+                <button class="cancel" onclick="closeModal()">ביטול</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const receipts = [];
+
+        function openModal() {
+            document.getElementById('modalTitle').innerText = 'הוספת קבלה';
+            document.getElementById('donorName').value = '';
+            document.getElementById('amount').value = '';
+            document.getElementById('receiptNumber').value = '';
+            document.getElementById('currency').value = 'שקל';
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('creationDate').value = today;
+            document.getElementById('printDate').value = today;
+            document.getElementById('newReceiptModal').style.display = 'flex';
+
+            // Attach Enter key navigation
+            const inputs = document.querySelectorAll('#newReceiptModal input, #newReceiptModal select');
+            inputs.forEach((input, index) => {
+                input.onkeydown = (event) => {
+                    if (event.key === 'Enter') {
+                        event.preventDefault();
+                        const nextInput = inputs[index + 1];
+                        if (nextInput) {
+                            nextInput.focus();
+                        } else {
+                            document.querySelector('.save').focus();
+                        }
+                    }
+                };
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('newReceiptModal').style.display = 'none';
+        }
+
+        function loadReceipts() {
+            const tableBody = document.getElementById('receiptsTable').querySelector('tbody');
+            tableBody.innerHTML = '';
+
+            receipts.forEach((receipt, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${receipt.donorName}</td>
+                    <td>${receipt.amount}</td>
+                    <td>
+                        <div class="actions">
+                            <button title="ערוך" onclick="editReceipt(${index})">✎</button>
+                            <button title="מחיקה" onclick="deleteReceipt(${index})">🗑</button>
+                        </div>
+                    </td>
+                    <td>${receipt.receiptNumber}</td>
+                    <td>${receipt.currency}</td>
+                    <td>${receipt.creationDate}</td>
+                    <td>${receipt.printDate}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function saveReceipt() {
+            const donorName = document.getElementById('donorName').value;
+            const amount = document.getElementById('amount').value;
+            const receiptNumber = document.getElementById('receiptNumber').value;
+            const currency = document.getElementById('currency').value;
+            const creationDate = document.getElementById('creationDate').value;
+            const printDate = document.getElementById('printDate').value;
+
+            if (!donorName || !amount || !receiptNumber || !creationDate || !printDate) {
+                alert('יש למלא את כל השדות הנדרשים.');
+                return;
+            }
+
+            receipts.push({
+                donorName,
+                amount,
+                receiptNumber,
+                currency,
+                creationDate,
+                printDate
+            });
+
+            closeModal();
+            loadReceipts();
+        }
+
+        function editReceipt(index) {
+            const receipt = receipts[index];
+            document.getElementById('modalTitle').innerText = 'עריכת קבלה';
+            document.getElementById('donorName').value = receipt.donorName;
+            document.getElementById('amount').value = receipt.amount;
+            document.getElementById('receiptNumber').value = receipt.receiptNumber;
+            document.getElementById('currency').value = receipt.currency;
+            document.getElementById('creationDate').value = receipt.creationDate;
+            document.getElementById('printDate').value = receipt.printDate;
+            document.getElementById('newReceiptModal').style.display = 'flex';
+
+            document.querySelector('.save').onclick = function() {
+                receipts[index] = {
+                    donorName: document.getElementById('donorName').value,
+                    amount: document.getElementById('amount').value,
+                    receiptNumber: document.getElementById('receiptNumber').value,
+                    currency: document.getElementById('currency').value,
+                    creationDate: document.getElementById('creationDate').value,
+                    printDate: document.getElementById('printDate').value
+                };
+
+                closeModal();
+                loadReceipts();
+            };
+        }
+
+        function deleteReceipt(index) {
+            receipts.splice(index, 1);
+            loadReceipts();
+        }
+
+        document.addEventListener('DOMContentLoaded', loadReceipts);
+    </script>
+</body>
+</html>
